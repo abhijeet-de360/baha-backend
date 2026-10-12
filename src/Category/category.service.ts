@@ -1,12 +1,16 @@
 import { Category, ICategory } from "./category.model";
+import { deletefromBunny, uploadToBunny } from "../utils/bunnyUploader";
+import { slugify } from "../utils/helper";
 
 // Create Category service function
-export const createCategoryService = async (data: Partial<ICategory>) => {
+export const createCategoryService = async (
+  data: Partial<ICategory>,
+  file: Express.Multer.File,
+) => {
   const {
     name,
     slug,
     description,
-    image,
     metaTitle,
     metaDescription,
     status,
@@ -14,7 +18,7 @@ export const createCategoryService = async (data: Partial<ICategory>) => {
   } = data;
 
   // Auto-generate slug from name if not provided
-  const resolvedSlug = slug || name?.trim().toLowerCase().replace(/\s+/g, "-");
+  const resolvedSlug = slug || slugify(name!);
 
   // Check for duplicate slug or name
   const existingCategory = await Category.findOne({
@@ -25,11 +29,22 @@ export const createCategoryService = async (data: Partial<ICategory>) => {
     throw new Error("Category already exists");
   }
 
+  const uploadResponse = await uploadToBunny(
+    file.path,
+    file.filename,
+    "category",
+  );
+
+  if (!uploadResponse) {
+    throw new Error("Category image upload failed");
+  }
+
   const category = new Category({
     slug: resolvedSlug,
     name,
     description,
-    image,
+    image: uploadResponse.url,
+    imageFileId: uploadResponse.fileName,
     metaTitle,
     metaDescription,
     status: status || "active",
@@ -45,34 +60,52 @@ export const createCategoryService = async (data: Partial<ICategory>) => {
 export const updateCategoryService = async (
   id: string,
   data: Partial<ICategory>,
+  file?: Express.Multer.File,
 ) => {
+  const existingCategory = await Category.findById(id);
+
+  if (!existingCategory) {
+    throw new Error("Category not found");
+  }
+  // If a new image file is provided, upload it and delete the old one
+  if (file) {
+    const uploadResponse = await uploadToBunny(
+      file.path,
+      file.filename,
+      "category",
+    );
+    if (!uploadResponse) {
+      throw new Error("Category image upload failed");
+    }
+    // Delete old image from BunnyCDN if it exists
+    if (existingCategory.imageFileId) {
+      await deletefromBunny(existingCategory.imageFileId, "category");
+    }
+    data.image = uploadResponse.url;
+    data.imageFileId = uploadResponse.fileName;
+  }
   const updatedCategory = await Category.findByIdAndUpdate(id, data, {
     new: true,
   });
-
-  if (!updatedCategory) {
-    throw new Error("Category not found");
-  }
-
   return updatedCategory;
 };
 
 // Get all categories service function
 export const getAllCategoriesService = async (
-  search: string,
+  keyword: string,
   limit: number,
   offset: number,
   status?: string,
 ) => {
   const query: Record<string, any> = {};
 
-  if (search) {
+  if (keyword?.trim()) {
     query.$or = [
-      { name: { $regex: search, $options: "i" } },
-      { slug: { $regex: search, $options: "i" } },
-      { description: { $regex: search, $options: "i" } },
-      { metaTitle: { $regex: search, $options: "i" } },
-      { metaDescription: { $regex: search, $options: "i" } },
+      { name: { $regex: keyword.trim(), $options: "i" } },
+      { slug: { $regex: keyword.trim(), $options: "i" } },
+      { description: { $regex: keyword.trim(), $options: "i" } },
+      { metaTitle: { $regex: keyword.trim(), $options: "i" } },
+      { metaDescription: { $regex: keyword.trim(), $options: "i" } },
     ];
   }
 
@@ -96,7 +129,7 @@ export const getAllCategoriesService = async (
 export const deleteCategoryService = async (id: string) => {
   const deletedCategory = await Category.findByIdAndUpdate(
     id,
-    { status: "inactive" },
+    { status: "deleted" },
     {
       new: true,
     },

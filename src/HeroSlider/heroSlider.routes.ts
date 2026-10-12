@@ -6,12 +6,23 @@ import {
   updateHeroSliderController,
 } from "./heroSlider.controller";
 import { isAdmin } from "../middleware/isAdmin";
+import { upload } from "../utils/multer";
 
 const heroSliderRouter = Router();
 
 heroSliderRouter.get("/list", getAllHeroSlidersController);
-heroSliderRouter.post("/create", isAdmin, createHeroSliderController);
-heroSliderRouter.patch("/update/:id", isAdmin, updateHeroSliderController);
+heroSliderRouter.post(
+  "/create",
+  isAdmin,
+  upload.single("image"),
+  createHeroSliderController,
+);
+heroSliderRouter.patch(
+  "/update/:id",
+  isAdmin,
+  upload.single("image"),
+  updateHeroSliderController,
+);
 heroSliderRouter.delete("/delete/:id", isAdmin, deleteHeroSliderController);
 
 export default heroSliderRouter;

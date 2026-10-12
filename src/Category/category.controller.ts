@@ -20,22 +20,31 @@ export const createCategoryController = async (req: Request, res: Response) => {
       priority,
     } = req.body;
 
-    if (!name || !image || !metaTitle || !metaDescription) {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: "Image is required" });
+    }
+
+    if (!name || !metaTitle || !metaDescription) {
       return res.status(400).json({
         message: "Name, image, metaTitle, and metaDescription are required",
       });
     }
 
-    const result = await createCategoryService({
-      name,
-      slug,
-      description,
-      image,
-      metaTitle,
-      metaDescription,
-      status,
-      priority,
-    });
+    const result = await createCategoryService(
+      {
+        name,
+        slug,
+        description,
+        image,
+        metaTitle,
+        metaDescription,
+        status,
+        priority,
+      },
+      file,
+    );
 
     return res.status(201).json(result);
   } catch (error: any) {
@@ -53,23 +62,27 @@ export const updateCategoryController = async (req: Request, res: Response) => {
       name,
       slug,
       description,
-      image,
       metaTitle,
       metaDescription,
       status,
       priority,
     } = req.body;
 
-    const result = await updateCategoryService(id, {
-      name,
-      slug,
-      description,
-      image,
-      metaTitle,
-      metaDescription,
-      status,
-      priority,
-    });
+    const file = req.file;
+
+    const result = await updateCategoryService(
+      id,
+      {
+        name,
+        slug,
+        description,
+        metaTitle,
+        metaDescription,
+        status,
+        priority,
+      },
+      file,
+    );
 
     return res.status(200).json(result);
   } catch (error: any) {
@@ -85,9 +98,9 @@ export const getAllCategoriesController = async (
   res: Response,
 ) => {
   try {
-    const { search = '', limit = 10, offset = 0, status } = req.query;
+    const { keyword = "", limit = 10, offset = 0, status } = req.query;
     const result = await getAllCategoriesService(
-      search as string,
+      keyword as string,
       Number(limit),
       Number(offset),
       status as string,

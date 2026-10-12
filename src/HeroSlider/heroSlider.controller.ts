@@ -12,8 +12,6 @@ export const createHeroSliderController = async (req: Request, res: Response) =>
     const {
       title,
       subTitle,
-      image,
-      mobileImage,
       buttonLabel,
       buttonLink,
       status,
@@ -22,22 +20,27 @@ export const createHeroSliderController = async (req: Request, res: Response) =>
       endDate,
     } = req.body;
 
-    if (!title || !image) {
-      return res.status(400).json({ message: "Title and image are required" });
+    if (!title) {
+      return res.status(400).json({ message: "Title is required" });
+    }
+
+    const file = req.file;
+
+    console.log("File ===> ", file);
+    if(!file) {
+      return res.status(400).json({ message: "Image is required" });
     }
 
     const result = await createHeroSliderService({
       title,
       subTitle,
-      image,
-      mobileImage,
       buttonLabel,
       buttonLink,
       status,
       order,
       startDate,
       endDate,
-    });
+    }, file);
 
     return res.status(201).json(result);
   } catch (error: any) {
@@ -53,9 +56,9 @@ export const getAllHeroSlidersController = async (
   res: Response,
 ) => {
   try {
-    const { search = "", limit = 10, offset = 0, status } = req.query;
+    const { keyword = "", limit = 10, offset = 0, status } = req.query;
     const result = await getAllHeroSlidersService(
-      search as string,
+      keyword as string,
       Number(limit),
       Number(offset),
       status as string,
@@ -79,7 +82,6 @@ export const updateHeroSliderController = async (
       title,
       subTitle,
       image,
-      mobileImage,
       buttonLabel,
       buttonLink,
       status,
@@ -92,7 +94,6 @@ export const updateHeroSliderController = async (
       title,
       subTitle,
       image,
-      mobileImage,
       buttonLabel,
       buttonLink,
       status,

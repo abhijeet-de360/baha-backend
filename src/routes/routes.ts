@@ -8,6 +8,7 @@ import testimonialRouter from '../Testimonial/testimonial.routes';
 import faqRouter from '../FAQ/faq.routes';
 import adminRouter from '../Admin/admin.routes';
 import settingsRouter from '../Settings/settings.routes';
+import subCategoryRouter from '../SubCategory/subCategory.routes';
 
 
 const routes = Router();
@@ -22,10 +23,13 @@ routes.use('/color', colorRouter);
 routes.use("/size", sizeRouter);
 
 // Category routes
-routes.use("/category", categoryRouter)
+routes.use("/category", categoryRouter);
+
+// Sub Category routes
+routes.use("/subCategory", subCategoryRouter);
 
 // Hero slider routes
-routes.use("/hero-slider", heroSliderRouter);
+routes.use("/heroSlider", heroSliderRouter);
 
 // Coupon routes
 routes.use("/coupon", couponRouter);

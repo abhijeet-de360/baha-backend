@@ -4,10 +4,10 @@ export interface IHeroSlider extends Document {
   title: string;
   subTitle?: string;
   image: string;
-  mobileImage?: string;
+  imageFileId: string;
   buttonLabel?: string;
   buttonLink?: string;
-  status: "active" | "inactive";
+  status: "active" | "inactive" | "deleted";
   order: number;
   startDate?: Date;
   endDate?: Date;
@@ -26,7 +26,7 @@ const HeroSliderSchema = new Schema<IHeroSlider>(
       type: String,
       required: true,
     },
-    mobileImage: {
+    imageFileId: {
       type: String,
     },
     buttonLabel: {
@@ -37,7 +37,7 @@ const HeroSliderSchema = new Schema<IHeroSlider>(
     },
     status: {
       type: String,
-      enum: ["active", "inactive"],
+      enum: ["active", "inactive", "deleted"],
       default: "active",
     },
     order: {

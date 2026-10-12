@@ -1,12 +1,14 @@
+import { uploadToBunny } from "../utils/bunnyUploader";
 import { HeroSlider, IHeroSlider } from "./heroSlider.model";
 
 // Create hero slider service function
-export const createHeroSliderService = async (data: Partial<IHeroSlider>) => {
+export const createHeroSliderService = async (
+  data: Partial<IHeroSlider>,
+  file: Express.Multer.File,
+) => {
   const {
     title,
     subTitle,
-    image,
-    mobileImage,
     buttonLabel,
     buttonLink,
     status,
@@ -15,21 +17,18 @@ export const createHeroSliderService = async (data: Partial<IHeroSlider>) => {
     endDate,
   } = data;
 
-  const existedHeroSlider = await HeroSlider.findOne({
-    order: {
-      $eq: order,
-    },
-  });
+  // Bunny CDN file upload
+  const uploadResponse = await uploadToBunny(file.path, file.filename, "hero");
 
-  if (existedHeroSlider) {
-    throw new Error("Hero slider with this order already exists");
+  if (!uploadResponse) {
+    throw new Error("Hero slider image upload failed");
   }
 
   const heroSlider = new HeroSlider({
     title,
     subTitle,
-    image,
-    mobileImage,
+    image: uploadResponse.url,
+    imageFileId: uploadResponse.fileName,
     buttonLabel,
     buttonLink,
     status: status || "active",
@@ -61,16 +60,18 @@ export const updateHeroSliderService = async (
 
 // Get all hero slider service function
 export const getAllHeroSlidersService = async (
-  query: string,
+  keyword: string,
   limit: number,
   offset: number,
   status?: string,
 ) => {
-  const filter: Record<string, unknown> = {};
+  const filter: Record<string, unknown> = {
+    status: { $ne: "deleted" },
+  };
 
-  if (query?.trim()) {
+  if (keyword?.trim()) {
     filter.title = {
-      $regex: query.trim(),
+      $regex: keyword.trim(),
       $options: "i",
     };
   }
@@ -93,7 +94,7 @@ export const deleteHeroSliderService = async (id: string) => {
   const deletedHeroSlider = await HeroSlider.findByIdAndUpdate(
     id,
     {
-      status: "inactive",
+      status: "deleted",
     },
     { new: true },
   );
