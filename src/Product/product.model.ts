@@ -1,12 +1,17 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 
+type Image = {
+  image: string;
+  imageFileId: string;
+};
+
 // ─── Sub-document: Product Variant ───────────────────────────────────────────
 export interface IProductVariant {
   sku: string;
-  size: Types.ObjectId;       // ref: Size
-  color: Types.ObjectId;      // ref: Color
-  stock: number;
-  isAvailable: boolean;
+  images: Image[];
+  sizes: any; // ref: Size
+  color: Types.ObjectId; // ref: Color
+  defaultView: boolean;
 }
 
 const ProductVariantSchema = new Schema<IProductVariant>(
@@ -16,42 +21,58 @@ const ProductVariantSchema = new Schema<IProductVariant>(
       required: true,
       trim: true,
     },
-    size: {
-      type: Schema.Types.ObjectId,
-      ref: "Size",
-      required: true,
-    },
     color: {
       type: Schema.Types.ObjectId,
       ref: "Color",
       required: true,
     },
-    stock: {
-      type: Number,
-      required: true,
-      min: 0,
-      default: 0,
-    },
-    isAvailable: {
+    images: [
+      {
+        image: {
+          type: String,
+          required: true,
+        },
+        imageFileId: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
+    sizes: [
+      {
+        size: {
+          type: Schema.Types.ObjectId,
+          ref: "Size",
+          required: true,
+        },
+        stock: {
+          type: Number,
+          required: true,
+          min: 0,
+          default: 0,
+        },
+        isAvailable: {
+          type: Boolean,
+          default: true,
+        },
+        price: {
+          type: Number,
+          required: true,
+          min: 0,
+          default: 0,
+        },
+        discountPrice: {
+          type: Number,
+          min: 0,
+        },
+      },
+    ],
+    defaultView: {
       type: Boolean,
-      default: true,
-    },
+      default: false,
+    }
   },
-  { _id: true }
-);
-
-// ─── Sub-document: Product Specification ─────────────────────────────────────
-export interface IProductSpec {
-  label: string;
-  value: string;
-}
-
-const ProductSpecSchema = new Schema<IProductSpec>(
-  {
-    label: { type: String, required: true, trim: true },
-    value: { type: String, required: true, trim: true },
-  },
-  { _id: false }
+  { _id: true },
 );
 
 // ─── Main Interface ───────────────────────────────────────────────────────────
@@ -63,44 +84,39 @@ export interface IProduct extends Document {
   status: "active" | "inactive" | "deleted";
   isFeatured: boolean;
 
-  // Media
-  image: string;              // primary/thumbnail image
-  gallery: string[];          // additional images
+  // Media              // primary/thumbnail image
+  gallery: string[]; // additional images
 
   // Pricing
   price: number;
   discountPrice?: number;
 
   // Categorisation
-  category: Types.ObjectId;   // ref: Category
+  category: Types.ObjectId; // ref: Category
+  subCategory: Types.ObjectId; // ref: SubCategory
 
-  // Inventory (top-level SKU — used when no variants)
-  sku?: string;
-
-  // Variants (size x color combinations with individual stock)
+  // Variants by color
   variants: IProductVariant[];
 
   // Product details
   fabric?: string;
   careInstructions?: string;
-  ageSuitability?: string;    // e.g. "0-3 months", "3-5 years"
-  sizeChart?: string;         // URL to size-chart image or doc
-
-  // Extended specifications (key/value pairs)
-  specifications: IProductSpec[];
+  ageSuitability?: string; // e.g. "0-3 months", "3-5 years"
+  sizeChart?: string; // URL to size-chart image or doc
+  specifications?: string;
 
   // Related products (manually configured by admin)
-  relatedProducts: Types.ObjectId[];  // ref: Product
+  relatedProducts: Types.ObjectId[]; // ref: Product
 
   // Virtual Try-On
   isVirtualTryOnEnabled: boolean;
-  virtualTryOnAssetUrl?: string;      // 3D model / AR asset URL
+  virtualTryOnAssetUrl?: string; // 3D model / AR asset URL
 
   // SEO / ratings
   metaTitle?: string;
   metaDescription?: string;
-  rating: number;
-  numReviews: number;
+  averageRating: number;
+  totalReviews: number;
 }
 
 // ─── Main Schema ──────────────────────────────────────────────────────────────
@@ -131,38 +147,16 @@ const ProductSchema = new Schema<IProduct>(
       default: false,
     },
 
-    // Media
-    image: {
-      type: String,
-      required: true,
-    },
-    gallery: {
-      type: [String],
-      default: [],
-    },
-
-    // Pricing
-    price: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-    discountPrice: {
-      type: Number,
-      min: 0,
-    },
-
     // Categorisation
     category: {
       type: Schema.Types.ObjectId,
       ref: "Category",
       required: true,
     },
-
-    // Top-level SKU (when variants are not used)
-    sku: {
-      type: String,
-      trim: true,
+    subCategory: {
+      type: Schema.Types.ObjectId,
+      ref: "SubCategory",
+      required: true,
     },
 
     // Variants
@@ -187,8 +181,7 @@ const ProductSchema = new Schema<IProduct>(
 
     // Extended specifications
     specifications: {
-      type: [ProductSpecSchema],
-      default: [],
+      type: String,
     },
 
     // Related products (manually set by admin)
@@ -215,14 +208,14 @@ const ProductSchema = new Schema<IProduct>(
       type: String,
     },
 
-    // Ratings (aggregated)
-    rating: {
+    // Ratings
+    averageRating: {
       type: Number,
       default: 0,
       min: 0,
       max: 5,
     },
-    numReviews: {
+    totalReviews: {
       type: Number,
       default: 0,
       min: 0,
@@ -230,9 +223,8 @@ const ProductSchema = new Schema<IProduct>(
   },
   {
     timestamps: true,
-  }
+  },
 );
-
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 export const Product = mongoose.model<IProduct>("Product", ProductSchema);

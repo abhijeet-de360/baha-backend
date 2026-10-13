@@ -7,15 +7,7 @@ export const createCategoryService = async (
   data: Partial<ICategory>,
   file: Express.Multer.File,
 ) => {
-  const {
-    name,
-    slug,
-    description,
-    metaTitle,
-    metaDescription,
-    status,
-    priority,
-  } = data;
+  const { name, slug, priority } = data;
 
   // Auto-generate slug from name if not provided
   const resolvedSlug = slug || slugify(name!);
@@ -42,12 +34,8 @@ export const createCategoryService = async (
   const category = new Category({
     slug: resolvedSlug,
     name,
-    description,
     image: uploadResponse.url,
     imageFileId: uploadResponse.fileName,
-    metaTitle,
-    metaDescription,
-    status: status || "active",
     priority: priority || 0,
   });
 
@@ -97,15 +85,14 @@ export const getAllCategoriesService = async (
   offset: number,
   status?: string,
 ) => {
-  const query: Record<string, any> = {};
+  const query: Record<string, any> = {
+    status: { $ne: "deleted" },
+  };
 
   if (keyword?.trim()) {
     query.$or = [
       { name: { $regex: keyword.trim(), $options: "i" } },
       { slug: { $regex: keyword.trim(), $options: "i" } },
-      { description: { $regex: keyword.trim(), $options: "i" } },
-      { metaTitle: { $regex: keyword.trim(), $options: "i" } },
-      { metaDescription: { $regex: keyword.trim(), $options: "i" } },
     ];
   }
 
@@ -114,7 +101,7 @@ export const getAllCategoriesService = async (
   }
 
   const result = await Category.find(query)
-    .sort({ createdAt: -1 })
+    .sort({ priority: 1, createdAt: -1 })
     .skip(offset)
     .limit(limit);
   const total = await Category.countDocuments(query);

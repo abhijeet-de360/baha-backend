@@ -12,22 +12,7 @@ export const createSubCategoryController = async (
   res: Response,
 ) => {
   try {
-    const {
-      name,
-      slug,
-      description,
-      category,
-      priority,
-      status,
-      metaTitle,
-      metaDescription,
-    } = req.body;
-
-    const file = req.file;
-
-    if (!file) {
-      return res.status(400).json({ message: "Image is required" });
-    }
+    const { name, slug, category } = req.body;
 
     if (!name || !category) {
       return res.status(400).json({
@@ -39,14 +24,8 @@ export const createSubCategoryController = async (
       {
         name,
         slug,
-        description,
         category,
-        priority: priority ? Number(priority) : 0,
-        status,
-        metaTitle,
-        metaDescription,
-      },
-      file,
+      }
     );
 
     return res.status(201).json(result);
@@ -64,32 +43,16 @@ export const updateSubCategoryController = async (
 ) => {
   try {
     const id = String(req.params.id);
-    const {
-      name,
-      slug,
-      description,
-      category,
-      priority,
-      status,
-      metaTitle,
-      metaDescription,
-    } = req.body;
-
-    const file = req.file;
+    const { name, slug, category, status } = req.body;
 
     const result = await updateSubCategoryService(
       id,
       {
         name,
         slug,
-        description,
         category,
-        priority: priority !== undefined ? Number(priority) : undefined,
-        status,
-        metaTitle,
-        metaDescription,
-      },
-      file,
+        status
+      }
     );
 
     return res.status(200).json(result);

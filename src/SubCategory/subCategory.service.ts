@@ -1,14 +1,12 @@
 import { SubCategory, ISubCategory } from "./subCategory.model";
-import { deletefromBunny, uploadToBunny } from "../utils/bunnyUploader";
 import { slugify } from "../utils/helper";
 import { Category } from "../Category/category.model";
 
 // Create sub category service function
 export const createSubCategoryService = async (
-  data: Partial<ISubCategory>,
-  file: Express.Multer.File,
+  data: Partial<ISubCategory>
 ) => {
-  const { name, slug, description, category, priority, status } = data;
+  const { name, slug, category } = data;
 
   // auto generated slug from name if not provided
   const resolvedSlug = slug || slugify(name!);
@@ -26,46 +24,28 @@ export const createSubCategoryService = async (
     throw new Error("Category not found");
   }
 
-  const uploadResponse = await uploadToBunny(
-    file.path,
-    file.filename,
-    "subCategory",
-  );
-
-  if (!uploadResponse) {
-    throw new Error("Image upload failed");
-  }
-
   const subCategory = new SubCategory({
     name,
     slug: resolvedSlug,
-    description,
     category,
-    priority,
-    status: status || "active",
-    image: uploadResponse.url,
-    imageFileId: uploadResponse.fileName,
-    metaTitle: data.metaTitle || name,
-    metaDescription: data.metaDescription || description,
   });
 
-  await subCategory.save();
+  const subCategoryResult = await (await subCategory.save()).populate("category", "name");
 
-  return subCategory;
+  return subCategoryResult;
 };
 
 // Update sub category service function
 export const updateSubCategoryService = async (
   id: string,
   data: Partial<ISubCategory>,
-  file?: Express.Multer.File,
 ) => {
   const subCategory = await SubCategory.findById(id);
   if (!subCategory) {
     throw new Error("Sub category not found");
   }
 
-  const { name, slug, description, category, priority, status } = data;
+  const { name, slug, category, status } = data;
 
   const resolvedSlug = slug || slugify(name || subCategory.name);
 
@@ -83,37 +63,14 @@ export const updateSubCategoryService = async (
     }
   }
 
-  if (file) {
-    // upload new image to bunny cdn
-    const uploadResponse = await uploadToBunny(
-      file.path,
-      file.filename,
-      "subCategory",
-    );
-
-    if (!uploadResponse) {
-      throw new Error("Image upload failed");
-    }
-
-    // delete old image from bunny cdn
-    await deletefromBunny(subCategory.imageFileId, "subCategory");
-    subCategory.image = uploadResponse.url;
-    subCategory.imageFileId = uploadResponse.fileName;
-  }
-
   subCategory.name = name || subCategory.name;
   subCategory.slug = resolvedSlug;
-  subCategory.description = description || subCategory.description;
   subCategory.category = category || subCategory.category;
-  subCategory.priority = priority || subCategory.priority;
   subCategory.status = status || subCategory.status;
-  subCategory.metaTitle = data.metaTitle || subCategory.metaTitle;
-  subCategory.metaDescription =
-    data.metaDescription || subCategory.metaDescription;
 
-  await subCategory.save();
+  const subCategoryResult = await (await subCategory.save()).populate("category", "name");
 
-  return subCategory;
+  return subCategoryResult;
 };
 
 // Get all sub categories service function
@@ -124,23 +81,22 @@ export const getAllSubCategoriesService = async (
   status: string,
   categoryId?: string,
 ) => {
-  const query: Record<string, any> = {};
+  const query: Record<string, any> = {
+    status: { $ne: "deleted" }
+  };
 
   if (keyword?.trim()) {
     query.$or = [
       { name: { $regex: keyword.trim(), $options: "i" } },
       { slug: { $regex: keyword.trim(), $options: "i" } },
-      { description: { $regex: keyword.trim(), $options: "i" } },
-      { metaTitle: { $regex: keyword.trim(), $options: "i" } },
-      { metaDescription: { $regex: keyword.trim(), $options: "i" } },
     ];
   }
 
-  if (status) {
+  if (status && status !== "all") {
     query.status = status;
   }
 
-  if (categoryId) {
+  if (categoryId && categoryId !== "all") {
     query.category = categoryId;
   }
 

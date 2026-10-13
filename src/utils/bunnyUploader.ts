@@ -1,6 +1,9 @@
 import axios from "axios";
 import fs from "fs";
 import path from "path";
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const { BH_CDN_STORAGE, BH_CDN_ACCESS, BH_CDN_LINK } = process.env;
 

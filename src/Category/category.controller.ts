@@ -12,11 +12,6 @@ export const createCategoryController = async (req: Request, res: Response) => {
     const {
       name,
       slug,
-      description,
-      image,
-      metaTitle,
-      metaDescription,
-      status,
       priority,
     } = req.body;
 
@@ -26,9 +21,9 @@ export const createCategoryController = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Image is required" });
     }
 
-    if (!name || !metaTitle || !metaDescription) {
+    if (!name) {
       return res.status(400).json({
-        message: "Name, image, metaTitle, and metaDescription are required",
+        message: "Name is required",
       });
     }
 
@@ -36,11 +31,6 @@ export const createCategoryController = async (req: Request, res: Response) => {
       {
         name,
         slug,
-        description,
-        image,
-        metaTitle,
-        metaDescription,
-        status,
         priority,
       },
       file,
@@ -61,11 +51,8 @@ export const updateCategoryController = async (req: Request, res: Response) => {
     const {
       name,
       slug,
-      description,
-      metaTitle,
-      metaDescription,
-      status,
       priority,
+      status
     } = req.body;
 
     const file = req.file;
@@ -75,11 +62,8 @@ export const updateCategoryController = async (req: Request, res: Response) => {
       {
         name,
         slug,
-        description,
-        metaTitle,
-        metaDescription,
-        status,
         priority,
+        status
       },
       file,
     );

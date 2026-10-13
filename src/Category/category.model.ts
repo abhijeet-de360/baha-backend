@@ -3,13 +3,10 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface ICategory extends Document {
   slug: string;
   name: string;
-  description?: string;
   priority?: number;
   status: "active" | "inactive" | "deleted";
   image: string;
   imageFileId: string;
-  metaTitle: string;
-  metaDescription: string;
 }
 
 const CategorySchema = new Schema<ICategory>(
@@ -20,9 +17,6 @@ const CategorySchema = new Schema<ICategory>(
     name: {
       type: String,
       required: true,
-    },
-    description: {
-      type: String,
     },
     priority: {
       type: Number,
@@ -39,14 +33,6 @@ const CategorySchema = new Schema<ICategory>(
     },
     imageFileId: {
       type: String,
-    },
-    metaTitle: {
-      type: String,
-      required: true,
-    },
-    metaDescription: {
-      type: String,
-      required: true,
     },
   },
   {
