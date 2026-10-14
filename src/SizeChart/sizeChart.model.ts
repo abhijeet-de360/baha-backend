@@ -3,9 +3,9 @@ import mongoose, { Document, Schema, Types } from "mongoose";
 // ─── Sub-document: Size Chart Row ─────────────────────────────────────────────
 export interface ISizeChartRow {
   size: Types.ObjectId;
-  height?: number;
-  chest?: number;
-  waist?: number;
+  height?: { min: number; max: number };
+  chest?: { min: number; max: number };
+  waist?: { min: number; max: number };
 }
 
 const SizeChartRowSchema = new Schema<ISizeChartRow>(
@@ -15,9 +15,18 @@ const SizeChartRowSchema = new Schema<ISizeChartRow>(
       ref: "Size",
       required: true,
     },
-    height: { type: Number, min: 0 },
-    chest: { type: Number, min: 0 },
-    waist: { type: Number, min: 0 },
+    height: {
+      min: { type: Number, required: true, min: 0 },
+      max: { type: Number, required: true, min: 0 },
+    },
+    chest: {
+      min: { type: Number, required: true, min: 0 },
+      max: { type: Number, required: true, min: 0 },
+    },
+    waist: {
+      min: { type: Number, required: true, min: 0 },
+      max: { type: Number, required: true, min: 0 },
+    },
   },
   { _id: false },
 );
@@ -27,7 +36,7 @@ export interface ISizeChart extends Document {
   name: string;
   description?: string;
   rows: ISizeChartRow[];
-  status: "active" | "inactive" | "deleted";
+  status: "active" | "deleted";
 }
 
 // ─── Main Schema ──────────────────────────────────────────────────────────────
@@ -40,6 +49,7 @@ const SizeChartSchema = new Schema<ISizeChart>(
     },
     description: {
       type: String,
+      default: "",
     },
     rows: {
       type: [SizeChartRowSchema],
@@ -47,7 +57,7 @@ const SizeChartSchema = new Schema<ISizeChart>(
     },
     status: {
       type: String,
-      enum: ["active", "inactive", "deleted"] as const,
+      enum: ["active", "deleted"] as const,
       default: "active",
     },
   },

@@ -1,26 +1,27 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 
 type Image = {
-  image: string;
+  imageUrl: string;
   imageFileId: string;
 };
 
 // ─── Sub-document: Product Variant ───────────────────────────────────────────
 export interface IProductVariant {
-  sku: string;
   images: Image[];
-  sizes: any; // ref: Size
+  options: {
+    sku: string;
+    size: Types.ObjectId; // ref: Size
+    stock: number;
+    isAvailable: boolean;
+    price: number;
+    discountPrice: number;
+  }[];
   color: Types.ObjectId; // ref: Color
   defaultView: boolean;
 }
 
 const ProductVariantSchema = new Schema<IProductVariant>(
   {
-    sku: {
-      type: String,
-      required: true,
-      trim: true,
-    },
     color: {
       type: Schema.Types.ObjectId,
       ref: "Color",
@@ -28,7 +29,7 @@ const ProductVariantSchema = new Schema<IProductVariant>(
     },
     images: [
       {
-        image: {
+        imageUrl: {
           type: String,
           required: true,
         },
@@ -38,8 +39,13 @@ const ProductVariantSchema = new Schema<IProductVariant>(
         },
       },
     ],
-    sizes: [
+    options: [
       {
+        sku: {
+          type: String,
+          required: true,
+          trim: true,
+        },
         size: {
           type: Schema.Types.ObjectId,
           ref: "Size",
@@ -70,7 +76,7 @@ const ProductVariantSchema = new Schema<IProductVariant>(
     defaultView: {
       type: Boolean,
       default: false,
-    }
+    },
   },
   { _id: true },
 );
@@ -83,13 +89,8 @@ export interface IProduct extends Document {
   description?: string;
   status: "active" | "inactive" | "deleted";
   isFeatured: boolean;
-
-  // Media              // primary/thumbnail image
-  gallery: string[]; // additional images
-
-  // Pricing
-  price: number;
-  discountPrice?: number;
+  newArrival: boolean;
+  bestSeller: boolean;
 
   // Categorisation
   category: Types.ObjectId; // ref: Category
@@ -101,8 +102,7 @@ export interface IProduct extends Document {
   // Product details
   fabric?: string;
   careInstructions?: string;
-  ageSuitability?: string; // e.g. "0-3 months", "3-5 years"
-  sizeChart?: string; // URL to size-chart image or doc
+  sizeChart?: Types.ObjectId; // ref: SizeChart
   specifications?: string;
 
   // Related products (manually configured by admin)
@@ -133,6 +133,7 @@ const ProductSchema = new Schema<IProduct>(
       required: true,
       lowercase: true,
       trim: true,
+      unique: true
     },
     description: {
       type: String,
@@ -143,6 +144,14 @@ const ProductSchema = new Schema<IProduct>(
       default: "active",
     },
     isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+    bestSeller: {
+      type: Boolean,
+      default: false,
+    },
+    newArrival: {
       type: Boolean,
       default: false,
     },
@@ -172,11 +181,9 @@ const ProductSchema = new Schema<IProduct>(
     careInstructions: {
       type: String,
     },
-    ageSuitability: {
-      type: String,
-    },
     sizeChart: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "SizeChart",
     },
 
     // Extended specifications
