@@ -10,6 +10,7 @@ import adminRouter from '../Admin/admin.routes';
 import settingsRouter from '../Settings/settings.routes';
 import subCategoryRouter from '../SubCategory/subCategory.routes';
 import sizeChartRouter from '../SizeChart/sizeChart.routes';
+import productRouter from '../Product/product.routes';
 
 
 const routes = Router();
@@ -46,5 +47,8 @@ routes.use("/faq", faqRouter);
 
 // Settings routes
 routes.use("/settings", settingsRouter);
+
+// Product routes
+routes.use("/product", productRouter);
 
 export default routes;

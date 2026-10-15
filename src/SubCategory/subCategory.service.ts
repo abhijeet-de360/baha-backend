@@ -12,11 +12,11 @@ export const createSubCategoryService = async (
   const resolvedSlug = slug || slugify(name!);
 
   // Check if sub category with this slug already exists
-  const slugExists = await SubCategory.exists({ slug: resolvedSlug });
+  // const slugExists = await SubCategory.exists({ slug: resolvedSlug });
 
-  if (slugExists) {
-    throw new Error("Slug already exists");
-  }
+  // if (slugExists) {
+  //   throw new Error("Slug already exists");
+  // }
 
   // Check if category is valid
   const categoryExists = await Category.findById(category);

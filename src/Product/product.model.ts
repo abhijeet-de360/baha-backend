@@ -87,14 +87,14 @@ export interface IProduct extends Document {
   name: string;
   slug: string;
   description?: string;
-  status: "active" | "inactive" | "deleted";
+  status: "active" | "inactive" | "draft" | "deleted";
   isFeatured: boolean;
   newArrival: boolean;
   bestSeller: boolean;
 
   // Categorisation
-  category: Types.ObjectId; // ref: Category
-  subCategory: Types.ObjectId; // ref: SubCategory
+  category: Types.ObjectId[]; // ref: Category
+  subCategory: Types.ObjectId[]; // ref: SubCategory
 
   // Variants by color
   variants: IProductVariant[];
@@ -140,7 +140,7 @@ const ProductSchema = new Schema<IProduct>(
     },
     status: {
       type: String,
-      enum: ["active", "inactive", "deleted"],
+      enum: ["active", "inactive", "draft", "deleted"],
       default: "active",
     },
     isFeatured: {
@@ -158,14 +158,22 @@ const ProductSchema = new Schema<IProduct>(
 
     // Categorisation
     category: {
-      type: Schema.Types.ObjectId,
-      ref: "Category",
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "Category",
+        },
+      ],
       required: true,
     },
     subCategory: {
-      type: Schema.Types.ObjectId,
-      ref: "SubCategory",
-      required: true,
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "SubCategory",
+        },
+      ],
+      default: [],
     },
 
     // Variants
