@@ -27,14 +27,8 @@ export const createProductService = async (
     virtualTryOnAssetUrl,
     metaTitle,
     metaDescription,
-    status,
     variants,
   } = data;
-
-  console.log("Data === > ", data);
-  console.log("files ===> ", files);
-
-  throw new Error("Something went wrong");
 
   // Generate slug if not provided
   const resolvedSlug = slug || slugify(name!);
@@ -113,12 +107,75 @@ export const createProductService = async (
     metaTitle,
     metaDescription,
 
-    status: status ?? "active",
+    status: "active",
 
     variants: processedVariants,
   });
 
   await product.save();
+
+  return product;
+};
+
+// Get All Products service function
+export const getAllProductService = async (
+  keyword: string,
+  limit: number,
+  offset: number,
+  status?: string,
+  category?: string,
+  size?: string,
+) => {
+  const query: Record<string, any> = {
+    status: { $ne: "deleted" },
+  };
+
+  if (keyword?.trim()) {
+    query.$or = [
+      { name: { $regex: keyword.trim(), $options: "i" } },
+      { slug: { $regex: keyword.trim(), $options: "i" } },
+    ];
+  }
+
+  if (status) {
+    query.status = status;
+  }
+
+  if (category) {
+    query.category = category;
+  }
+
+  if (size) {
+    query["variants.options.size"] = size;
+  }
+
+  const result = await Product.find(query)
+    .populate("category", "name slug")
+    .populate("subCategory", "name slug")
+    .populate("variants.color", "name hexCode")
+    .populate("variants.options.size", "name")
+    .sort({ createdAt: -1 })
+    .skip(offset)
+    .limit(limit)
+    .lean();
+
+  const total = await Product.countDocuments(query);
+
+  return { result, total };
+};
+
+// Get product by id service function
+export const getProductByIdService = async (id: string) => {
+  const product = await Product.findById(id)
+    .populate("category", "name slug")
+    .populate("subCategory", "name slug")
+    .populate("variants.color", "name hexCode")
+    .populate("variants.options.size", "name")
+    .lean();
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
 
   return product;
 };

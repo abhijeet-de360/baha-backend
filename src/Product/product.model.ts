@@ -38,6 +38,7 @@ const ProductVariantSchema = new Schema<IProductVariant>(
           required: true,
         },
       },
+      { _id: false }
     ],
     options: [
       {
@@ -87,7 +88,7 @@ export interface IProduct extends Document {
   name: string;
   slug: string;
   description?: string;
-  status: "active" | "inactive" | "draft" | "deleted";
+  status: "active" | "inactive" | "deleted";
   isFeatured: boolean;
   newArrival: boolean;
   bestSeller: boolean;
@@ -140,7 +141,7 @@ const ProductSchema = new Schema<IProduct>(
     },
     status: {
       type: String,
-      enum: ["active", "inactive", "draft", "deleted"],
+      enum: ["active", "inactive", "deleted"],
       default: "active",
     },
     isFeatured: {
