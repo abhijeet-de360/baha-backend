@@ -1,8 +1,10 @@
 import { Request, Response } from "express";
 import {
   createProductService,
+  deleteProductService,
   getAllProductService,
   getProductByIdService,
+  updateProductService,
 } from "./product.service";
 
 // Create Product controller
@@ -26,15 +28,22 @@ export const createProductController = async (req: Request, res: Response) => {
 // Get all products controller function
 export const getAllProductController = async (req: Request, res: Response) => {
   try {
-    const { keyword = "", limit = 10, offset = 0, status, category, size } = req.query;
-    
+    const {
+      keyword = "",
+      limit = 10,
+      offset = 0,
+      status,
+      category,
+      size,
+    } = req.query;
+
     const result = await getAllProductService(
       keyword as string,
       Number(limit),
       Number(offset),
       status as string,
       category as string,
-      size as string
+      size as string,
     );
     return res.status(200).json(result);
   } catch (error: any) {
@@ -55,4 +64,36 @@ export const getProductByIdController = async (req: Request, res: Response) => {
       .status(500)
       .json({ message: error.message || "Failed to get product by id" });
   }
-}
+};
+
+// Update product controller function
+export const updateProductController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const data = JSON.parse(req.body.data);
+
+    const files = (req.files as Express.Multer.File[]) || [];
+
+    const result = await updateProductService(id as string, data, files);
+
+    return res.status(200).json(result);
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json({ message: error.message || "Failed to update product" });
+  }
+};
+
+// Delete product controller function
+export const deleteProductController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const result = await deleteProductService(id as string);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json({ message: error.message || "Failed to delete product" });
+  }
+};

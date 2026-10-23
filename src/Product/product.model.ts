@@ -5,17 +5,19 @@ type Image = {
   imageFileId: string;
 };
 
+export interface Option extends Document {
+  sku: string;
+  size: Types.ObjectId; // ref: Size
+  stock: number;
+  isAvailable: boolean;
+  price: number;
+  discountPrice: number;
+}
+
 // ─── Sub-document: Product Variant ───────────────────────────────────────────
-export interface IProductVariant {
+export interface IProductVariant extends Document {
   images: Image[];
-  options: {
-    sku: string;
-    size: Types.ObjectId; // ref: Size
-    stock: number;
-    isAvailable: boolean;
-    price: number;
-    discountPrice: number;
-  }[];
+  options: Option[];
   color: Types.ObjectId; // ref: Color
   defaultView: boolean;
 }
