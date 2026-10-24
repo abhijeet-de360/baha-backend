@@ -34,7 +34,7 @@ routes.use("/category", categoryRouter);
 routes.use("/subCategory", subCategoryRouter);
 
 // Hero slider routes
-routes.use("/heroSlider", heroSliderRouter);
+routes.use("/heroBanner", heroSliderRouter);
 
 // Coupon routes
 routes.use("/coupon", couponRouter);

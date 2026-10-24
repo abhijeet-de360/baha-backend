@@ -26,7 +26,6 @@ export const createHeroSliderController = async (req: Request, res: Response) =>
 
     const file = req.file;
 
-    console.log("File ===> ", file);
     if(!file) {
       return res.status(400).json({ message: "Image is required" });
     }
