@@ -12,8 +12,7 @@ export const createTestimonialController = async (
   res: Response,
 ) => {
   try {
-    const { customerName, customerRole, rating, status, avatar, review } =
-      req.body;
+    const { customerName, customerRole, rating, status, review } = req.body;
 
     if (!customerName || !review) {
       return res
@@ -21,14 +20,18 @@ export const createTestimonialController = async (
         .json({ message: "Customer name and review are required" });
     }
 
-    const result = await createTestimonialService({
-      customerName,
-      customerRole,
-      rating,
-      status,
-      avatar,
-      review,
-    });
+    const file = req.file;
+
+    const result = await createTestimonialService(
+      {
+        customerName,
+        customerRole,
+        rating,
+        status,
+        review,
+      },
+      file,
+    );
 
     return res.status(201).json(result);
   } catch (error: any) {
@@ -45,17 +48,21 @@ export const updateTestimonialController = async (
 ) => {
   try {
     const id = String(req.params.id);
-    const { customerName, customerRole, rating, status, avatar, review } =
-      req.body;
+    const { customerName, customerRole, rating, status, review } = req.body;
 
-    const result = await updateTestimonialService(id, {
-      customerName,
-      customerRole,
-      rating,
-      status,
-      avatar,
-      review,
-    });
+    const file = req.file;
+
+    const result = await updateTestimonialService(
+      id,
+      {
+        customerName,
+        customerRole,
+        rating,
+        status,
+        review,
+      },
+      file,
+    );
 
     return res.status(200).json(result);
   } catch (error: any) {
@@ -71,13 +78,7 @@ export const getAllTestimonialsController = async (
   res: Response,
 ) => {
   try {
-    const { search = "", limit = 10, offset = 0, status } = req.query;
-    const result = await getAllTestimonialsService(
-      search as string,
-      Number(limit),
-      Number(offset),
-      status as string,
-    );
+    const result = await getAllTestimonialsService();
     return res.status(200).json(result);
   } catch (error: any) {
     return res

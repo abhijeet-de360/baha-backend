@@ -1,4 +1,4 @@
-import { uploadToBunny } from "../utils/bunnyUploader";
+import { deletefromBunny, uploadToBunny } from "../utils/bunnyUploader";
 import { HeroSlider, IHeroSlider } from "./heroSlider.model";
 
 // Create hero slider service function
@@ -46,14 +46,42 @@ export const createHeroSliderService = async (
 export const updateHeroSliderService = async (
   id: string,
   data: Partial<IHeroSlider>,
+  file?: Express.Multer.File,
 ) => {
-  const updatedHeroSlider = await HeroSlider.findByIdAndUpdate(id, data, {
-    new: true,
-  });
+  const existHeroSlider = await HeroSlider.findById(id);
 
-  if (!updatedHeroSlider) {
+  if (!existHeroSlider) {
     throw new Error("Hero slider not found");
   }
+
+  // If image file provider, upload it to bunny then delete the old one
+  if (file) {
+    // Bunny CDN file upload
+    const uploadResponse = await uploadToBunny(
+      file.path,
+      file.filename,
+      "hero",
+    );
+
+    if (!uploadResponse) {
+      throw new Error("Hero slider image upload failed");
+    }
+
+    // Delete old image from BunnyCDN if it exists
+    if (existHeroSlider.imageFileId) {
+      await deletefromBunny(existHeroSlider.imageFileId, "hero");
+    }
+
+    // Update the image URL and file ID
+    data.image = uploadResponse.url;
+    data.imageFileId = uploadResponse.fileName;
+  }
+
+  // Update other fields
+  const updatedHeroSlider = await HeroSlider.findByIdAndUpdate(id, data, {
+    new: true,
+    runValidators: true,
+  });
 
   return updatedHeroSlider;
 };
@@ -104,4 +132,18 @@ export const deleteHeroSliderService = async (id: string) => {
   }
 
   return deletedHeroSlider;
+};
+
+// Get hero slider by id service function
+export const getHeroSliderByIdService = async (id: string) => {
+  const heroSlider = await HeroSlider.findOne({
+    _id: id,
+    status: { $ne: "deleted" },
+  });
+
+  if (!heroSlider) {
+    throw new Error("Hero slider not found");
+  }
+
+  return heroSlider;
 };

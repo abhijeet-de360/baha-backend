@@ -4,8 +4,9 @@ export interface ITestimonial extends Document {
   customerName: string;
   customerRole?: string;
   rating: number;
-  status: "active" | "inactive";
-  avatar?: string;
+  status: "active" | "inactive" | "deleted";
+  image?: string;
+  imageFileId?: string;
   review: string;
 }
 
@@ -18,7 +19,7 @@ const TestimonialSchema = new Schema<ITestimonial>(
     },
     customerRole: {
       type: String,
-      default: "Verified Buyer",
+      default: "Verified Customer",
     },
     rating: {
       type: Number,
@@ -28,11 +29,14 @@ const TestimonialSchema = new Schema<ITestimonial>(
     },
     status: {
       type: String,
-      enum: ["active", "inactive"],
+      enum: ["active", "inactive", "deleted"],
       default: "active",
       required: true,
     },
-    avatar: {
+    image: {
+      type: String,
+    },
+    imageFileId: {
       type: String,
     },
     review: {

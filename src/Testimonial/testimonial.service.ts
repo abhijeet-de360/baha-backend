@@ -1,18 +1,35 @@
+import { deletefromBunny, uploadToBunny } from "../utils/bunnyUploader";
 import { Testimonial, ITestimonial } from "./testimonial.model";
 
 // Create testimonial service function
 export const createTestimonialService = async (
   data: Partial<ITestimonial>,
+  file?: Express.Multer.File,
 ) => {
-  const { customerName, customerRole, rating, status, avatar, review } = data;
+  const { customerName, customerRole, rating, status, review } = data;
+
+  let uploadResponse;
+
+  if (file) {
+    uploadResponse = await uploadToBunny(
+      file.path,
+      file.filename,
+      "testimonial",
+    );
+
+    if (!uploadResponse) {
+      throw new Error("Testimonial image upload failed");
+    }
+  }
 
   const testimonial = new Testimonial({
     customerName,
     customerRole,
     rating: rating || 5,
     status: status || "active",
-    avatar,
     review,
+    image: uploadResponse?.url || "",
+    imageFileId: uploadResponse?.fileName || "",
   });
 
   await testimonial.save();
@@ -24,7 +41,33 @@ export const createTestimonialService = async (
 export const updateTestimonialService = async (
   id: string,
   data: Partial<ITestimonial>,
+  file?: Express.Multer.File,
 ) => {
+  const existingTestimonial = await Testimonial.findById(id);
+
+  if (!existingTestimonial) {
+    throw new Error("Testimonial not found");
+  }
+
+  if (file) {
+    const uploadResponse = await uploadToBunny(
+      file.path,
+      file.filename,
+      "testimonial",
+    );
+
+    if (!uploadResponse) {
+      throw new Error("Testimonial image upload failed");
+    }
+
+    if (existingTestimonial.imageFileId) {
+      await deletefromBunny(existingTestimonial.imageFileId, "testimonial");
+    }
+
+    data.image = uploadResponse.url;
+    data.imageFileId = uploadResponse.fileName;
+  }
+
   const updatedTestimonial = await Testimonial.findByIdAndUpdate(id, data, {
     new: true,
   });
@@ -37,30 +80,14 @@ export const updateTestimonialService = async (
 };
 
 // Get all testimonials service function
-export const getAllTestimonialsService = async (
-  search: string,
-  limit: number,
-  offset: number,
-  status?: string,
-) => {
-  const query: Record<string, any> = {};
-
-  if (search) {
-    query.$or = [
-      { customerName: { $regex: search, $options: "i" } },
-      { customerRole: { $regex: search, $options: "i" } },
-      { review: { $regex: search, $options: "i" } },
-    ];
-  }
-
-  if (status) {
-    query.status = status;
-  }
+export const getAllTestimonialsService = async () => {
+  const query: Record<string, any> = {
+    status: { $ne: "deleted" },
+  };
 
   const result = await Testimonial.find(query)
     .sort({ createdAt: -1 })
-    .skip(offset)
-    .limit(limit);
+    .lean();
   const total = await Testimonial.countDocuments(query);
 
   return {
@@ -73,7 +100,7 @@ export const getAllTestimonialsService = async (
 export const deleteTestimonialService = async (id: string) => {
   const deletedTestimonial = await Testimonial.findByIdAndUpdate(
     id,
-    { status: "inactive" },
+    { status: "deleted" },
     { new: true },
   );
 
