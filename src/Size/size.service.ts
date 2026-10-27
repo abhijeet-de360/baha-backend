@@ -65,6 +65,10 @@ export const getAllSizesService = async (
     };
   }
 
+  if (status) {
+    filter.status = status
+  }
+
   const result = await Size.find(filter)
   .skip(Number(offset))
   .limit(Number(limit))
