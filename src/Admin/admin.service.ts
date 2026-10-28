@@ -58,7 +58,7 @@ export const loginAdminService = async (email: string, password: string) => {
     // Generate JWT token
     const token = generateJWTToken(
       { _id: admin._id.toString(), type: admin.type },
-      "24h",
+      "365d",
     );
 
     const { password: _pw, ...adminData } = admin.toObject();

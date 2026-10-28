@@ -18,9 +18,13 @@ export function generateJWTToken(
 
 // Verify JWT token function
 export function verifyJWTToken(token: string) {
-  const decodedToken = jwt.verify(
-    token,
-    process.env.BH_JWT_SECRET as string,
-  ) as JWTPayload;
-  return decodedToken;
+  try {
+    const decodedToken = jwt.verify(
+      token,
+      process.env.BH_JWT_SECRET as string,
+    ) as JWTPayload;
+    return decodedToken;
+  } catch (error) {
+    throw error;
+  }
 }

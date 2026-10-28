@@ -4,9 +4,7 @@ export interface IBlog extends Document {
   title: string;
   slug: string;
   content: string;
-  status: "active" | "inactive" | "deleted";
   image?: string;
-  imageFieldId?: string;
   imageFileId?: string;
   metaTitle?: string;
   metaDescription?: string;
@@ -31,16 +29,7 @@ const BlogSchema = new Schema<IBlog>(
       type: String,
       required: true,
     },
-    status: {
-      type: String,
-      enum: ["active", "inactive", "deleted"],
-      default: "active",
-      required: true,
-    },
     image: {
-      type: String,
-    },
-    imageFieldId: {
       type: String,
     },
     imageFileId: {

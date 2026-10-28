@@ -7,7 +7,7 @@ export const createBlogService = async (
   data: Partial<IBlog>,
   file?: Express.Multer.File,
 ) => {
-  const { title, slug, content, status, metaTitle, metaDescription } = data;
+  const { title, slug, content, metaTitle, metaDescription } = data;
 
   if (!title) {
     throw new Error("Blog title is required");
@@ -19,7 +19,6 @@ export const createBlogService = async (
   // Check for duplicate slug
   const existingBlog = await Blog.findOne({
     $or: [{ slug: resolvedSlug }, { title }],
-    status: { $ne: "deleted" },
   });
 
   if (existingBlog) {
@@ -38,10 +37,8 @@ export const createBlogService = async (
     title,
     slug: resolvedSlug,
     content,
-    status: status || "active",
-    image: uploadResponse?.url || data.image || "",
-    imageFileId: uploadResponse?.fileName || data.imageFileId || "",
-    imageFieldId: uploadResponse?.fileName || data.imageFieldId || "",
+    image: uploadResponse?.url || "",
+    imageFileId: uploadResponse?.fileName || "",
     metaTitle,
     metaDescription,
   });
@@ -58,7 +55,7 @@ export const updateBlogService = async (
 ) => {
   const existingBlog = await Blog.findById(id);
 
-  if (!existingBlog || existingBlog.status === "deleted") {
+  if (!existingBlog) {
     throw new Error("Blog not found");
   }
 
@@ -73,7 +70,6 @@ export const updateBlogService = async (
     const duplicate = await Blog.findOne({
       _id: { $ne: id },
       slug: resolvedSlug,
-      status: { $ne: "deleted" },
     });
 
     if (duplicate) {
@@ -95,18 +91,18 @@ export const updateBlogService = async (
       throw new Error("Blog image upload failed");
     }
 
-    const oldFileId = existingBlog.imageFileId || existingBlog.imageFieldId;
+    const oldFileId = existingBlog.imageFileId;
     if (oldFileId) {
       await deletefromBunny(oldFileId, "blog");
     }
 
     data.image = uploadResponse.url;
     data.imageFileId = uploadResponse.fileName;
-    data.imageFieldId = uploadResponse.fileName;
   }
 
   const updatedBlog = await Blog.findByIdAndUpdate(id, data, {
     new: true,
+    runValidators: true
   });
 
   if (!updatedBlog) {
@@ -121,7 +117,6 @@ export const getAllBlogsService = async (
   keyword: string = "",
   offset: number = 0,
   limit: number = 10,
-  status?: string,
 ) => {
   const query: Record<string, any> = {
     status: { $ne: "deleted" },
@@ -132,10 +127,6 @@ export const getAllBlogsService = async (
       { title: { $regex: keyword.trim(), $options: "i" } },
       { slug: { $regex: keyword.trim(), $options: "i" } },
     ];
-  }
-
-  if (status) {
-    query.status = status;
   }
 
   const result = await Blog.find(query)
@@ -154,7 +145,7 @@ export const getAllBlogsService = async (
 
 // Get blog by ID service function
 export const getBlogByIdService = async (id: string) => {
-  const blog = await Blog.findOne({ _id: id, status: { $ne: "deleted" } });
+  const blog = await Blog.findOne({ _id: id});
 
   if (!blog) {
     throw new Error("Blog not found");
@@ -165,7 +156,7 @@ export const getBlogByIdService = async (id: string) => {
 
 // Get blog by slug service function
 export const getBlogBySlugService = async (slug: string) => {
-  const blog = await Blog.findOne({ slug, status: { $ne: "deleted" } });
+  const blog = await Blog.findOne({ slug });
 
   if (!blog) {
     throw new Error("Blog not found");
@@ -174,17 +165,19 @@ export const getBlogBySlugService = async (slug: string) => {
   return blog;
 };
 
-// Delete blog service function (soft delete)
+// Delete blog service function (hard delete)
 export const deleteBlogService = async (id: string) => {
-  const deletedBlog = await Blog.findByIdAndUpdate(
-    id,
-    { status: "deleted" },
-    { new: true },
-  );
+  const existingBlog = await Blog.findById(id);
 
-  if (!deletedBlog) {
+  if (!existingBlog) {
     throw new Error("Blog not found");
   }
+
+  if (existingBlog.imageFileId) {
+    await deletefromBunny(existingBlog.imageFileId, "blog");
+  }
+
+  const deletedBlog = await Blog.findByIdAndDelete(id);
 
   return deletedBlog;
 };

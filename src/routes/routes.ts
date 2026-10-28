@@ -11,7 +11,7 @@ import settingsRouter from '../Settings/settings.routes';
 import subCategoryRouter from '../SubCategory/subCategory.routes';
 import sizeChartRouter from '../SizeChart/sizeChart.routes';
 import productRouter from '../Product/product.routes';
-
+import blogRouter from '../Blog/blog.routes';
 
 const routes = Router();
 
@@ -50,5 +50,8 @@ routes.use("/settings", settingsRouter);
 
 // Product routes
 routes.use("/product", productRouter);
+
+// Blog routes
+routes.use("/blog", blogRouter);
 
 export default routes;

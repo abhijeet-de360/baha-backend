@@ -5,8 +5,9 @@ interface IUser extends Document {
   email: string;
   phone: string;
   password: string;
-  profile: string;
-  status: "active" | "inactive" | "deleted";
+  image: string;
+  imageFileId: string;
+  status: "active" | "suspended" | "deleted";
 }
 
 const UserSchema = new Schema<IUser>(
@@ -18,7 +19,6 @@ const UserSchema = new Schema<IUser>(
     },
     email: {
       type: String,
-      required: true,
       trim: true,
     },
     phone: {
@@ -28,15 +28,17 @@ const UserSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: true,
       trim: true,
     },
-    profile: {
+    image: {
+      type: String,
+    },
+    imageFileId: {
       type: String,
     },
     status: {
       type: String,
-      enum: ["active", "inactive", "deleted"],
+      enum: ["active", "suspended", "deleted"],
       default: "active",
     },
   },
