@@ -2,16 +2,18 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface ICoupon extends Document {
   code: string;
-  discountType: "percentage" | "fixed" | "free-shipping";
+  type: "percentage" | "flat";
   discountValue: number;
-  minOrderSpend: number;
-  maxCapDiscount?: number;
-  totalUsageLimit?: number;
-  limitPerCustomer: number;
-  startDate: Date;
-  endDate: Date;
-  status: "active" | "inactive" | "deleted";
-  description?: string;
+  minOrderValue: number;
+  maxDiscount?: number;
+  usageLimit: number;
+  timesUsed: number;
+  validFrom: Date;
+  validTill: Date;
+  status: "active" | "expired" | "disabled" | "deleted";
+  description: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 const CouponSchema = new Schema<ICoupon>(
@@ -19,58 +21,70 @@ const CouponSchema = new Schema<ICoupon>(
     code: {
       type: String,
       required: true,
-      uppercase: true,
+      unique: true,
       trim: true,
+      uppercase: true,
     },
-    discountType: {
+    type: {
       type: String,
-      enum: ["percentage", "fixed", "free-shipping"],
+      enum: ["percentage", "flat"],
       required: true,
+      default: "percentage",
     },
     discountValue: {
       type: Number,
       required: true,
+      default: 0,
       min: 0,
     },
-    minOrderSpend: {
+    minOrderValue: {
       type: Number,
       default: 0,
       min: 0,
     },
-    maxCapDiscount: {
+    maxDiscount: {
       type: Number,
-      default: null,
+      default: 0,
+      min: 0,
     },
-    totalUsageLimit: {
+    usageLimit: {
       type: Number,
-      default: null,
+      default: 0,
+      min: 0,
     },
-    limitPerCustomer: {
+    timesUsed: {
       type: Number,
-      default: 1,
-      min: 1,
+      default: 0,
+      min: 0,
     },
-    startDate: {
+    validFrom: {
       type: Date,
-      required: true,
+      default: Date.now,
     },
-    endDate: {
+    validTill: {
       type: Date,
       required: true,
     },
     status: {
       type: String,
-      enum: ["active", "inactive", "deleted"] as const,
+      enum: ["active", "expired", "disabled", "deleted"],
       default: "active",
-      required: true,
     },
     description: {
       type: String,
+      trim: true,
+      default: "",
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true }
 );
+
+CouponSchema.pre("save", function () {
+  if (this.status !== "deleted" && this.status !== "disabled") {
+    if (new Date(this.validTill) < new Date()) {
+      this.status = "expired";
+    }
+  }
+});
 
 export const Coupon = mongoose.model<ICoupon>("Coupon", CouponSchema);
